@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Técnica de bisectriz — Guía de estudio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4FAF9; --surface:#FFFFFF; --ink:#213139; --muted:#647880;
+    --line:#E7EEEC; --line2:#DCE6E4;
+    --teal:#12B3A6; --teal-deep:#0C8A80; --teal-wash:#E4F5F2;
+    --coral:#FF7E6B; --coral-deep:#E4573F; --coral-wash:#FFECE7;
+    --violet:#8B7FF0; --violet-wash:#EDEAFD;
+    --honey:#F7AE3A; --honey-deep:#C8891C; --honey-wash:#FCEFD6;
+    --sky:#46B6E6;
+    --g-teal:linear-gradient(135deg,#19C3B2,#46B6E6);
+    --g-coral:linear-gradient(135deg,#FF8A73,#F7AE3A);
+    --g-violet:linear-gradient(135deg,#9A86F5,#F58BC2);
+    --g-mix:linear-gradient(135deg,#1FC0B0,#8B7FF0);
+    --g-sky:linear-gradient(135deg,#46B6E6,#12B3A6);
+    --shadow:0 22px 44px -26px rgba(33,60,70,.5);
+    --f-display:"Fraunces",Georgia,serif;
+    --f-body:"Nunito Sans",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--f-body);color:var(--ink);background:var(--bg);overflow:hidden;-webkit-font-smoothing:antialiased}
+
+  .deck{position:relative;height:100dvh;height:100vh;width:100vw;overflow:hidden;
+    background:
+      radial-gradient(120% 85% at 92% -12%, #E7F7FF 0%, transparent 52%),
+      radial-gradient(110% 85% at -10% 112%, #FFF0EB 0%, transparent 48%),
+      radial-gradient(90% 80% at 50% 120%, #EAF7F3 0%, transparent 60%),
+      var(--bg);}
+
+  .progress{position:absolute;top:0;left:0;right:0;height:3px;background:rgba(33,60,70,.08);z-index:40}
+  .progress__bar{height:100%;width:0;background:var(--g-teal);transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+  .slides{position:absolute;inset:0}
+  .slide{position:absolute;inset:0;transform:translateX(100%);opacity:0;transition:transform .6s cubic-bezier(.5,0,.15,1),opacity .5s ease;pointer-events:none;display:flex;overflow:hidden}
+  .slide.is-active{transform:translateX(0);opacity:1;pointer-events:auto}
+  .slide.is-prev{transform:translateX(-100%);opacity:0}
+  .slide__scroll{width:100%;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex}
+  .slide__pad{position:relative;z-index:0;width:100%;max-width:1180px;margin:auto;padding:clamp(28px,5vw,64px) clamp(22px,5vw,60px);padding-bottom:clamp(96px,12vh,120px)}
+  .is-active .slide__pad{animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  /* chips (colorful icon badges) */
+  .chip{display:inline-grid;place-items:center;color:#fff;border-radius:16px}
+  .chip svg{width:56%;height:56%}
+  .chip.lg{width:clamp(46px,6vw,56px);height:clamp(46px,6vw,56px);border-radius:16px;margin-bottom:1rem}
+  .chip.sm{width:40px;height:40px;border-radius:12px}
+  .g-teal{background:var(--g-teal);box-shadow:0 12px 22px -10px rgba(18,179,166,.6)}
+  .g-coral{background:var(--g-coral);box-shadow:0 12px 22px -10px rgba(255,126,107,.55)}
+  .g-violet{background:var(--g-violet);box-shadow:0 12px 22px -10px rgba(139,127,240,.55)}
+  .g-mix{background:var(--g-mix);box-shadow:0 12px 22px -10px rgba(95,120,220,.5)}
+  .g-sky{background:var(--g-sky);box-shadow:0 12px 22px -10px rgba(70,182,230,.5)}
+
+  .eyebrow{font-family:var(--f-body);font-weight:800;font-size:clamp(.7rem,1.4vw,.82rem);letter-spacing:.16em;text-transform:uppercase;color:var(--teal-deep)}
+  .s-title{font-family:var(--f-display);font-weight:600;line-height:1.05;letter-spacing:-.01em;font-size:clamp(1.9rem,4.8vw,3.2rem);color:var(--ink);margin:.35rem 0 clamp(1.3rem,3vh,2rem);max-width:20ch}
+  .s-title em{font-style:italic;color:var(--teal)}
+  .lead{font-size:clamp(1rem,1.9vw,1.2rem);color:var(--muted);line-height:1.55;max-width:52ch}
+  .subhead{font-family:var(--f-display);font-weight:600;font-size:clamp(1.1rem,2.1vw,1.35rem);color:var(--ink);margin-bottom:.9rem;display:flex;align-items:center;gap:.6rem}
+
+  .grid{display:grid;gap:clamp(14px,2.2vw,20px)}
+  @media(min-width:860px){.grid.two{grid-template-columns:1fr 1fr}}
+  .hero{display:grid;gap:clamp(22px,4vw,44px);align-items:center}
+  @media(min-width:900px){.hero{grid-template-columns:.82fr 1.18fr}.hero.rev{grid-template-columns:1.18fr .82fr}.hero.rev .side{order:2}}
+
+  .card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(18px,2.4vw,26px);box-shadow:var(--shadow);transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+  @media(hover:hover){.card:hover{transform:translateY(-3px);box-shadow:0 26px 46px -24px rgba(33,60,70,.45);border-color:var(--line2)}}
+  .card h3{font-family:var(--f-display);font-weight:600;font-size:clamp(1.08rem,2.1vw,1.32rem);color:var(--ink);margin-bottom:.5rem}
+  .card p{color:var(--muted);line-height:1.55;font-size:clamp(.95rem,1.7vw,1.05rem)}
+  .card .ch{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:11px;color:#fff;margin-bottom:.7rem}
+  .card .ch svg{width:56%;height:56%}
+  .card.tint-teal{background:linear-gradient(180deg,#F0FAF8,#fff)}
+  .card.tint-coral{background:linear-gradient(180deg,#FFF4F1,#fff)}
+  .card.tint-honey{background:linear-gradient(180deg,#FDF6E9,#fff)}
+  .card.tint-violet{background:linear-gradient(180deg,#F5F2FE,#fff)}
+
+  .steps{display:grid;gap:clamp(12px,1.8vh,18px)}
+  .step{display:flex;gap:clamp(14px,2vw,18px);align-items:flex-start}
+  .step__n{flex:none;width:clamp(38px,5vw,46px);height:clamp(38px,5vw,46px);border-radius:13px;display:grid;place-items:center;font-family:var(--f-display);font-weight:600;font-size:clamp(1rem,1.9vw,1.15rem);color:#fff;background:var(--g-teal);box-shadow:0 10px 18px -9px rgba(18,179,166,.6)}
+  .step__b h3{font-family:var(--f-display);font-weight:600;font-size:clamp(1.02rem,2vw,1.2rem);color:var(--ink);margin-bottom:.15rem}
+  .step__b p{color:var(--muted);line-height:1.5;font-size:clamp(.92rem,1.6vw,1.02rem)}
+
+  .pstep{display:flex;gap:clamp(14px,2vw,18px);align-items:flex-start}
+  .pstep__b{padding-top:2px}
+  .pstep__n{font-family:var(--f-body);font-weight:800;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--teal-deep)}
+  .pstep__b h3{font-family:var(--f-display);font-weight:600;font-size:clamp(1.02rem,2vw,1.2rem);color:var(--ink);margin:.05rem 0 .2rem}
+  .pstep__b p{color:var(--muted);line-height:1.5;font-size:clamp(.92rem,1.6vw,1.02rem)}
+
+  ul.bul{list-style:none;display:grid;gap:.7rem}
+  ul.bul li{position:relative;padding-left:1.5rem;color:var(--muted);line-height:1.5;font-size:clamp(.95rem,1.7vw,1.05rem)}
+  ul.bul li::before{content:"";position:absolute;left:0;top:.45em;width:9px;height:9px;border-radius:50%;background:var(--g-teal)}
+  ul.bul.coral li::before{background:var(--g-coral)}
+  strong{font-weight:700;color:var(--ink)}
+
+  .callout{display:flex;gap:.9rem;align-items:center;background:linear-gradient(135deg,#E9F7F4,#EDF0FE);border:1px solid var(--line);border-radius:16px;padding:clamp(14px,2vw,20px);margin-top:clamp(16px,2.5vh,26px)}
+  .callout .ch{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--g-mix);color:#fff}
+  .callout .ch svg{width:56%;height:56%}
+  .callout p{color:var(--ink);line-height:1.45;font-size:clamp(.92rem,1.6vw,1.02rem)}
+
+  .rule-strip{margin-top:clamp(18px,3vh,26px);background:var(--g-mix);border-radius:16px;padding:clamp(16px,2.2vw,22px);font-size:clamp(.98rem,1.8vw,1.12rem);line-height:1.5;color:#fff;box-shadow:0 18px 32px -18px rgba(95,120,220,.6)}
+  .rule-strip b{font-weight:800}
+
+  .panel{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:clamp(18px,3vw,30px);box-shadow:var(--shadow);display:grid;place-items:center}
+  .panel .pt{position:absolute;top:14px;left:18px;font-family:var(--f-body);font-weight:800;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .diagram{width:100%;max-width:380px;display:block}
+  .dlabel{font-family:var(--f-body);font-weight:700;font-size:15px}
+  .tlabel{font-family:var(--f-body);font-weight:700;font-size:12px}
+  .drop{filter:drop-shadow(0 8px 10px rgba(33,60,70,.10))}
+
+  /* illustration gradient panels for hero slides */
+  .illus{position:relative;width:100%;max-width:320px;margin:0 auto;aspect-ratio:1;border-radius:26px;display:grid;place-items:center;overflow:hidden;box-shadow:0 26px 50px -26px rgba(33,60,70,.5)}
+  .illus.g-sky{background:var(--g-sky)} .illus.g-coral{background:var(--g-coral)} .illus.g-violet{background:var(--g-violet)} .illus.g-mix{background:var(--g-mix)}
+  .illus svg.big{width:52%;height:52%;stroke:#fff}
+  .illus .sub{position:absolute;bottom:16px;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.22);backdrop-filter:blur(6px);color:#fff}
+  .illus .sub.a{left:24px} .illus .sub.b{right:24px}
+  .illus .sub svg{width:54%;height:54%}
+  .illus .glow{position:absolute;width:70%;height:70%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.35),transparent 70%)}
+
+  .tbl-wrap{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;font-size:clamp(.9rem,1.6vw,1.02rem)}
+  thead th{text-align:left;font-family:var(--f-body);font-weight:800;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:14px 16px;background:#F3F8F7;border-bottom:1px solid var(--line)}
+  tbody td{padding:11px 16px;border-bottom:1px solid #EEF3F2;color:var(--ink)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(4) td{border-bottom:2px solid var(--line2)}
+  .deg{font-family:var(--f-display);font-weight:600}
+  .deg.pos{color:var(--teal-deep)} .deg.neg{color:var(--coral-deep)}
+
+  .qgrid{display:grid;gap:clamp(12px,2vw,16px)}
+  @media(min-width:560px){.qgrid{grid-template-columns:1fr 1fr}}
+  .q{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(16px,2.2vw,22px);padding-top:clamp(26px,3vw,32px);box-shadow:var(--shadow)}
+  .q__n{position:absolute;top:-15px;left:18px;width:32px;height:32px;border-radius:11px;color:#fff;font-family:var(--f-display);font-weight:600;display:grid;place-items:center;background:var(--g-teal);box-shadow:0 10px 18px -9px rgba(18,179,166,.6)}
+  .q:nth-child(2) .q__n{background:var(--g-sky)} .q:nth-child(3) .q__n{background:var(--g-coral)} .q:nth-child(4) .q__n{background:var(--g-violet)}
+  .q p{color:var(--ink);line-height:1.45;font-size:clamp(.95rem,1.7vw,1.05rem)}
+
+  .src-list{display:grid;gap:14px;margin-top:1.6rem}
+  .src{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;font-family:var(--f-display);font-weight:500;font-size:clamp(1rem,1.9vw,1.15rem);color:var(--ink);box-shadow:var(--shadow)}
+  .src .ch{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff}
+  .src .ch svg{width:56%;height:56%}
+  .credit{margin-top:1.4rem;font-size:.82rem;color:var(--muted);line-height:1.5}
+
+  /* cover */
+  .cover{align-items:center}
+  .cover-grid{display:grid;gap:clamp(26px,4vw,50px);align-items:center;width:100%}
+  @media(min-width:900px){.cover-grid{grid-template-columns:1.02fr .98fr}}
+  .cover h1{font-family:var(--f-display);font-weight:600;font-size:clamp(2.8rem,9.5vw,5.4rem);line-height:.98;letter-spacing:-.02em;color:var(--ink);margin:.5rem 0 1rem}
+  .cover h1 em{font-style:italic;color:var(--teal)}
+  .cover .lead{font-size:clamp(1.05rem,2.2vw,1.28rem)}
+  .cover-meta{margin-top:clamp(20px,4vh,32px);display:flex;gap:1rem;flex-wrap:wrap}
+  .pill{font-family:var(--f-body);font-weight:700;font-size:.78rem;color:var(--teal-deep);background:var(--teal-wash);border-radius:999px;padding:.5rem .9rem}
+  .herocard{position:relative;width:100%;max-width:420px;aspect-ratio:1.05;margin:0 auto;border-radius:32px;background:var(--g-mix);display:grid;place-items:center;overflow:hidden;box-shadow:0 30px 60px -28px rgba(95,120,220,.65)}
+  .herotooth{width:46%;height:46%;filter:drop-shadow(0 12px 18px rgba(0,0,0,.18))}
+  .glasschip{position:absolute;top:26px;right:26px;display:inline-flex;align-items:center;gap:.35rem;padding:.5rem .8rem;border-radius:14px;background:rgba(255,255,255,.22);backdrop-filter:blur(8px);color:#fff;font-family:var(--f-display);font-weight:600;font-size:1.05rem}
+  .glasschip svg{width:20px;height:20px}
+  .spark{position:absolute;border-radius:50%;background:rgba(255,255,255,.5)}
+  .spark.s1{width:8px;height:8px;top:22%;left:20%} .spark.s2{width:5px;height:5px;top:70%;left:30%;background:rgba(255,255,255,.7)} .spark.s3{width:10px;height:10px;bottom:20%;right:24%;background:rgba(255,255,255,.35)}
+
+  .nav{position:absolute;left:0;right:0;bottom:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px clamp(18px,5vw,34px);padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,var(--bg) 55%,transparent);pointer-events:none}
+  .nav>*{pointer-events:auto}
+  .nav-btn{display:inline-flex;align-items:center;justify-content:center;height:46px;padding:0 16px;border:1px solid var(--line2);border-radius:13px;background:var(--surface);color:var(--ink);font-family:var(--f-body);font-weight:700;font-size:.85rem;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease}
+  .nav-btn:active{transform:scale(.95)}
+  .nav-btn:hover{border-color:var(--teal)}
+  .nav-btn:disabled{opacity:.35;cursor:default}
+  .nav-btn.icon{width:46px;padding:0}
+  .dots{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:60vw}
+  .dot-b{width:9px;height:9px;border-radius:50%;border:none;background:rgba(33,60,70,.18);cursor:pointer;padding:0;transition:transform .2s ease,background .2s ease}
+  .dot-b.on{background:var(--teal);transform:scale(1.4)}
+  .counter{font-family:var(--f-body);font-weight:700;font-size:.82rem;color:var(--muted);white-space:nowrap}
+  .counter b{color:var(--ink)}
+  .hint{position:absolute;bottom:78px;left:50%;transform:translateX(-50%);font-family:var(--f-body);font-weight:700;font-size:.74rem;letter-spacing:.04em;color:var(--muted);z-index:35;opacity:.9;transition:opacity .4s ease;pointer-events:none;text-align:center}
+  .hint.gone{opacity:0}
+
+  @media(prefers-reduced-motion:reduce){.slide{transition:opacity .2s ease}.is-active .slide__pad{animation:none}.progress__bar{transition:none}}
+  @media(max-width:640px){.counter{display:none}.dots{max-width:52vw}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="toothfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#EAF6F3"/></linearGradient>
+</defs></svg>
+
+<div class="deck">
+  <div class="progress"><div class="progress__bar" id="bar"></div></div>
+  <div class="slides" id="slides">
+
+    <!-- 0 COVER -->
+    <section class="slide cover">
+      <div class="slide__scroll"><div class="slide__pad">
+        <div class="cover-grid">
+          <div>
+            <span class="eyebrow">Radiografía periapical</span>
+            <h1>Técnica de<br><em>bisectriz</em></h1>
+            <p class="lead">Guía visual del método de la bisectriz: geometría, angulación, protocolo clínico y preguntas de repaso.</p>
+            <div class="cover-meta"><span class="pill">10 diapositivas</span><span class="pill">Desliza o usa ←/→</span></div>
+          </div>
+          <div class="herocard"><div class="spark s1"></div><div class="spark s2"></div><div class="spark s3"></div><svg class="herotooth" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg><span class="glasschip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 19h-18l9 -15" /> <path d="M20.615 15.171h.015" /> <path d="M19.515 11.771h.015" /> <path d="M17.715 8.671h.015" /> <path d="M15.415 5.971h.015" /></svg>90°</span></div>
+        </div>
+      </div></div>
+    </section>
+
+    <!-- 1 PRINCIPIO -->
+    <section class="slide">
+      <div class="slide__scroll"><div class="slide__pad">
+        <span class="chip lg g-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg></span>
+        <span class="eyebrow">Fundamento</span>
+        <h2 class="s-title">La bisectriz convierte dos ángulos en una imagen útil</h2>
+        <div class="hero rev">
+          <div class="panel side"><span class="pt">RX · Periapical</span><svg viewBox="0 0 400 380" class="diagram" role="img" aria-label="Esquema de la bisectriz"><path d="M104 186 C 102 166 138 166 136 186 C 135 200 132 210 130 233 L 110 233 C 108 210 105 200 104 186 Z" fill="url(#toothfill)" stroke="#12B3A6" stroke-width="2.2" stroke-linejoin="round" opacity=".95"/><path d="M110 233 C 111 276 116 312 120 320 C 124 312 129 276 130 233 Z" fill="url(#toothfill)" stroke="#12B3A6" stroke-width="2.2" stroke-linejoin="round" opacity=".95"/><line x1="120" y1="320" x2="54" y2="86" stroke="#FF7E6B" stroke-width="2.6" stroke-linecap="round"/><line x1="120" y1="320" x2="196" y2="66" stroke="#5A6B72" stroke-width="2.4" stroke-linecap="round"/><line x1="120" y1="320" x2="120" y2="60" stroke="#12B3A6" stroke-width="2.6" stroke-dasharray="7 6" stroke-linecap="round"/><line x1="336" y1="322" x2="140" y2="320" stroke="#F7AE3A" stroke-width="2.6" stroke-linecap="round"/><polygon points="138,320 156,313 156,327" fill="#F7AE3A"/><path d="M120 298 L138 298 L138 320" fill="none" stroke="#F7AE3A" stroke-width="1.6" opacity=".9"/><path d="M120 274 A46 46 0 0 0 98 286" fill="none" stroke="#12B3A6" stroke-width="1.5"/><path d="M120 274 A46 46 0 0 1 141 285" fill="none" stroke="#12B3A6" stroke-width="1.5"/><circle cx="120" cy="320" r="4.5" fill="#213139"/><text x="14" y="80" class="dlabel" fill="#E4573F">Receptor</text><text x="200" y="62" class="dlabel" fill="#5A6B72">Eje del diente</text><text x="128" y="52" class="dlabel" fill="#0C8A80">Bisectriz</text><text x="210" y="312" class="dlabel" fill="#C8891C">Rayo 90°</text></svg></div>
+          <div class="grid">
+            <div class="card tint-teal"><div class="ch g-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg></div><h3>Principio geométrico</h3><p>El receptor se coloca en palatino o lingual, apoyado sobre el diente. Una línea imaginaria —la <strong>bisectriz</strong>— divide el ángulo formado por el eje largo del diente y el receptor.</p></div>
+            <div class="card tint-honey"><div class="ch g-coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 19h-18l9 -15" /> <path d="M20.615 15.171h.015" /> <path d="M19.515 11.771h.015" /> <path d="M17.715 8.671h.015" /> <path d="M15.415 5.971h.015" /></svg></div><h3>Rayo central</h3><p>Se dirige perpendicular a <strong>90°</strong> al plano bisector para aplicar la <strong>regla isométrica</strong> y aproximar el tamaño real del diente.</p></div>
+          </div>
+        </div>
+        <div class="callout"><div class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg></div><p><strong>Objetivo:</strong> imagen periapical diagnóstica con mínima magnificación y distorsión. La regla isométrica: dos triángulos son iguales si comparten dos ángulos y un lado.</p></div>
+      </div></div>
+    </section>
+
+    <!-- 2 EXAMEN -->
+    <section class="slide">
+      <div class="slide__scroll"><div class="slide__pad">
+        <span class="chip lg g-sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h-1a2 2 0 0 0 -2 2v3.5a5.5 5.5 0 0 0 11 0v-3.5a2 2 0 0 0 -2 -2h-1" /> <path d="M8 15a6 6 0 1 0 12 0v-3" /> <path d="M11 3v2" /> <path d="M6 3v2" /> <path d="M18 10a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /></svg></span>
+        <span class="eyebrow">Antes de exponer</span>
+        <h2 class="s-title">Examen oral y preparación</h2>
+        <div class="hero">
+          <div class="illus g-sky side"><div class="glow"></div><svg class="big" viewBox="0 0 24 24" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h-1a2 2 0 0 0 -2 2v3.5a5.5 5.5 0 0 0 11 0v-3.5a2 2 0 0 0 -2 -2h-1" /> <path d="M8 15a6 6 0 1 0 12 0v-3" /> <path d="M11 3v2" /> <path d="M6 3v2" /> <path d="M18 10a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /></svg><span class="sub a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M11.102 17.957c-3.204 -.307 -5.904 -2.294 -8.102 -5.957c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6a19.5 19.5 0 0 1 -.663 1.032" /> <path d="M15 19l2 2l4 -4" /></svg></span><span class="sub b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg></span></div>
+          <div class="steps">
+            <div class="step"><div class="step__n">1</div><div class="step__b"><h3>Confirmación clínica</h3><p>Verificar la indicación, revisar la historia clínica y explicar el procedimiento al paciente.</p></div></div>
+            <div class="step"><div class="step__n">2</div><div class="step__b"><h3>Inspección oral</h3><p>Identificar dientes ausentes, restauraciones, apiñamiento, movilidad y zonas sensibles.</p></div></div>
+            <div class="step"><div class="step__n">3</div><div class="step__b"><h3>Preparación del equipo</h3><p>Retirar objetos que generen artefactos; preparar receptor, posicionador o Snap-A-Ray y barreras.</p></div></div>
+            <div class="step"><div class="step__n">4</div><div class="step__b"><h3>Selección del receptor</h3><p>Comprobar que el área incluirá corona, raíz completa y región periapical.</p></div></div>
+          </div>
+        </div>
+        <div class="callout"><div class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /> <path d="M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2" /> <path d="M9 14l2 2l4 -4" /></svg></div><p>La radiografía complementa la historia clínica y el examen intraoral; <strong>no los sustituye</strong>.</p></div>
+      </div></div>
+    </section>
+
+    <!-- 3 POSICIÓN -->
+    <section class="slide">
+      <div class="slide__scroll"><div class="slide__pad">
+        <span class="chip lg g-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 12a.5 .5 0 1 0 1 0a.5 .5 0 1 0 -1 0" fill="currentColor" /> <path d="M5 12a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /> <path d="M12 3l0 2" /> <path d="M3 12l2 0" /> <path d="M12 19l0 2" /> <path d="M19 12l2 0" /></svg></span>
+        <span class="eyebrow">Colocación</span>
+        <h2 class="s-title">Posición de la cabeza y de la película</h2>
+        <div class="hero rev">
+          <div class="panel side"><span class="pt">Colocación</span><svg viewBox="0 0 300 260" class="diagram"><g transform="rotate(-9 92 130)"><rect x="70" y="52" width="30" height="150" rx="8" fill="#FFEBE6" stroke="#FF7E6B" stroke-width="2.6"/></g><g transform="translate(30 0)"><path d="M104 86 C 102 66 138 66 136 86 C 135 100 132 110 130 133 L 110 133 C 108 110 105 100 104 86 Z" fill="url(#toothfill)" stroke="#12B3A6" stroke-width="2.2" stroke-linejoin="round" opacity=".95"/><path d="M110 133 C 111 176 116 212 120 220 C 124 212 129 176 130 133 Z" fill="url(#toothfill)" stroke="#12B3A6" stroke-width="2.2" stroke-linejoin="round" opacity=".95"/></g><line x1="150" y1="222" x2="150" y2="46" stroke="#12B3A6" stroke-width="2.6" stroke-dasharray="7 6" stroke-linecap="round"/><line x1="286" y1="224" x2="176" y2="222" stroke="#F7AE3A" stroke-width="2.6" stroke-linecap="round"/><polygon points="174,222 192,215 192,229" fill="#F7AE3A"/><path d="M150 200 L170 200 L170 222" fill="none" stroke="#F7AE3A" stroke-width="1.6" opacity=".9"/><text x="40" y="44" class="dlabel" fill="#E4573F">Receptor</text><text x="150" y="40" class="dlabel" fill="#0C8A80" text-anchor="middle">Bisectriz</text></svg></div>
+          <div class="grid two">
+            <div class="card"><h3>Cabeza</h3><p>Paciente estable con el <strong>plano oclusal paralelo al piso</strong>; ajustar inclinación según maxilar o mandíbula.</p></div>
+            <div class="card"><h3>Película o sensor</h3><p>En palatino o lingual, lo más cercano al diente sin doblarlo. Los ejes del receptor y del diente forman el ángulo a bisecar.</p></div>
+            <div class="card"><h3>Estabilización</h3><p>Unicel, plástico, pinza hemostática o <strong>Snap-A-Ray</strong>. Oclusión firme sin desplazar el receptor.</p></div>
+            <div class="card"><h3>Snap-A-Ray</h3><p>Extiende el plano lejos de la oclusal para mayor estabilidad; el mango sale de la boca.</p></div>
+          </div>
+        </div>
+        <div class="grid two" style="margin-top:clamp(14px,2.2vw,20px)">
+          <div class="card tint-teal"><div class="ch g-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg></div><h3>Maxilar</h3><p>Aprovechar la bóveda palatina; inclinación de cabeza hacia atrás.</p></div>
+          <div class="card tint-coral"><div class="ch g-coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg></div><h3>Mandíbula</h3><p>Cabeza erguida; controlar la lengua para evitar desplazamiento del receptor.</p></div>
+        </div>
+      </div></div>
+    </section>
+
+    <!-- 4 ERROR VERTICAL -->
+    <section class="slide">
+      <div class="slide__scroll"><div class="slide__pad">
+        <span class="chip lg g-coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 19h-18l9 -15" /> <path d="M20.615 15.171h.015" /> <path d="M19.515 11.771h.015" /> <path d="M17.715 8.671h.015" /> <path d="M15.415 5.971h.015" /></svg></span>
+        <span class="eyebrow">Error frecuente</span>
+        <h2 class="s-title">La angulación vertical cambia el tamaño del diente</h2>
+        <div class="grid two">
+          <div class="card tint-teal"><h3>Ángulo positivo (+)</h3><p>El haz va de <strong>arriba hacia abajo</strong> respecto al plano oclusal.</p></div>
+          <div class="card tint-coral"><h3>Ángulo negativo (−)</h3><p>El haz va de <strong>abajo hacia arriba</strong> respecto al plano oclusal.</p></div>
+          <div class="card tint-honey"><div class="ch g-coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l1 2.5l-2 2l2 2" /></svg></div><h3>Exceso de angulación</h3><p>Produce <strong>escorzo</strong>: el diente aparece más corto de lo real.</p></div>
+          <div class="card tint-coral"><div class="ch g-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l1 2.5l-2 2l2 2" /></svg></div><h3>Angulación insuficiente</h3><p>Produce <strong>elongación</strong>: el diente aparece más largo de lo real.</p></div>
+        </div>
+        <div class="panel" style="margin-top:clamp(20px,3vh,28px);max-width:560px"><span class="pt">Comparación</span><svg viewBox="0 0 360 216" style="width:100%;display:block;overflow:visible" class="drop"><line x1="30" y1="170" x2="330" y2="170" stroke="#12B3A6" stroke-width="1.6" stroke-dasharray="5 6"/><text x="332" y="166" class="tlabel" fill="#0C8A80">real</text><path d="M55 36 C 53 18 87 18 85 36 C 84 48 81 56 79 60 L 61 60 C 59 56 56 48 55 36 Z" fill="url(#toothfill)" stroke="#12B3A6" stroke-width="2.4" stroke-linejoin="round"/><path d="M61 60 C 62 115 66 163 70 170 C 74 163 78 115 79 60 Z" fill="url(#toothfill)" stroke="#12B3A6" stroke-width="2.4" stroke-linejoin="round"/><path d="M165 36 C 163 18 197 18 195 36 C 194 48 191 56 189 60 L 171 60 C 169 56 166 48 165 36 Z" fill="url(#toothfill)" stroke="#F7AE3A" stroke-width="2.4" stroke-linejoin="round"/><path d="M171 60 C 172 90 176 113 180 120 C 184 113 188 90 189 60 Z" fill="url(#toothfill)" stroke="#F7AE3A" stroke-width="2.4" stroke-linejoin="round"/><path d="M275 36 C 273 18 307 18 305 36 C 304 48 301 56 299 60 L 281 60 C 279 56 276 48 275 36 Z" fill="url(#toothfill)" stroke="#FF7E6B" stroke-width="2.4" stroke-linejoin="round"/><path d="M281 60 C 282 119 286 171 290 178 C 294 171 298 119 299 60 Z" fill="url(#toothfill)" stroke="#FF7E6B" stroke-width="2.4" stroke-linejoin="round"/><text x="70" y="204" class="tlabel" fill="#0C8A80" text-anchor="middle">correcto</text><text x="180" y="204" class="tlabel" fill="#C8891C" text-anchor="middle">escorzo</text><text x="290" y="204" class="tlabel" fill="#E4573F" text-anchor="middle">elongado</text></svg></div>
+        <div class="rule-strip">Regla: <b>demasiado ángulo = acorta; poco ángulo = alarga.</b> Ajusta siempre según la anatomía del paciente.</div>
+      </div></div>
+    </section>
+
+    <!-- 5 ANGULACIÓN H/V -->
+    <section class="slide">
+      <div class="slide__scroll"><div class="slide__pad">
+        <span class="chip lg g-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 19h-18l9 -15" /> <path d="M20.615 15.171h.015" /> <path d="M19.515 11.771h.015" /> <path d="M17.715 8.671h.015" /> <path d="M15.415 5.971h.015" /></svg></span>
+        <span class="eyebrow">El par que define la imagen</span>
+        <h2 class="s-title">Angulación horizontal y vertical</h2>
+        <div class="grid two">
+          <div>
+            <h3 class="subhead">Horizontal</h3>
+            <ul class="bul">
+              <li>Haz <strong>perpendicular al plano horizontal</strong> de las superficies vestibulares.</li>
+              <li>Rayo central a <strong>90°</strong> horizontal a través de la región de interés.</li>
+              <li>Una angulación incorrecta superpone los contactos interproximales.</li>
+              <li>Deben verse corona, raíz, ápice y <strong>2–3 mm de hueso periapical</strong>.</li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="subhead">Vertical — valores promedio</h3>
+            <div class="tbl-wrap"><table>
+              <thead><tr><th>Región</th><th>Diente</th><th>Ángulo</th></tr></thead>
+              <tbody>
+                <tr><td>Maxilar</td><td>Molares</td><td class="deg pos">+30°</td></tr>
+                <tr><td>Maxilar</td><td>Premolares</td><td class="deg pos">+35°</td></tr>
+                <tr><td>Maxilar</td><td>Caninos</td><td class="deg pos">+45°</td></tr>
+                <tr><td>Maxilar</td><td>Incisivos</td><td class="deg pos">+40°</td></tr>
+                <tr><td>Mandíbula</td><td>Molares</td><td class="deg neg">−5°</td></tr>
+                <tr><td>Mandíbula</td><td>Premolares</td><td class="deg neg">−10°</td></tr>
+                <tr><td>Mandíbula</td><td>Caninos</td><td class="deg neg">−20°</td></tr>
+                <tr><td>Mandíbula</td><td>Incisivos</td><td class="deg neg">−15°</td></tr>
+              </tbody>
+            </table></div>
+            <p style="color:var(--muted);font-size:.86rem;line-height:1.5;margin-top:.8rem">Referencias iniciales; la anatomía y la morfología del paciente exigen ajustes clínicos.</p>
+          </div>
+        </div>
+      </div></div>
+    </section>
+
+    <!-- 6 PROTOCOLO -->
+    <section class="slide">
+      <div class="slide__scroll"><div class="slide__pad">
+        <span class="chip lg g-mix"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.615 20h-2.615a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8" /> <path d="M14 19l2 2l4 -4" /> <path d="M9 8h4" /> <path d="M9 12h2" /></svg></span>
+        <span class="eyebrow">Paso a paso</span>
+        <h2 class="s-title">Protocolo clínico: de la indicación a la imagen</h2>
+        <div class="steps">
+          <div class="pstep"><span class="chip sm g-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /> <path d="M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2" /> <path d="M9 14l2 2l4 -4" /></svg></span><div class="pstep__b"><span class="pstep__n">Paso 1</span><h3>Verificación y consentimiento</h3><p>Confirmar identidad, indicación y consentimiento; colocar protección plomada y explicar que el paciente debe permanecer inmóvil.</p></div></div>
+          <div class="pstep"><span class="chip sm g-sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16.5l-5 -3l5 -3l5 3v5.5l-5 3l0 -5.5" /> <path d="M2 13.5v5.5l5 3" /> <path d="M7 16.545l5 -3.03" /> <path d="M17 16.5l-5 -3l5 -3l5 3v5.5l-5 3l0 -5.5" /> <path d="M12 19l5 3" /> <path d="M17 16.5l5 -3" /> <path d="M12 13.5v-5.5l-5 -3l5 -3l5 3v5.5" /> <path d="M7 5.03v5.455" /> <path d="M12 8l5 -3" /></svg></span><div class="pstep__b"><span class="pstep__n">Paso 2</span><h3>Preparación del equipo</h3><p>Seleccionar receptor, soporte y parámetros de exposición según el equipo y el tamaño del paciente.</p></div></div>
+          <div class="pstep"><span class="chip sm g-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 12a.5 .5 0 1 0 1 0a.5 .5 0 1 0 -1 0" fill="currentColor" /> <path d="M5 12a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /> <path d="M12 3l0 2" /> <path d="M3 12l2 0" /> <path d="M12 19l0 2" /> <path d="M19 12l2 0" /></svg></span><div class="pstep__b"><span class="pstep__n">Paso 3</span><h3>Posicionamiento</h3><p>Colocar cabeza, receptor y estabilizador; centrar el área de interés y pedir oclusión firme.</p></div></div>
+          <div class="pstep"><span class="chip sm g-coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 19h-18l9 -15" /> <path d="M20.615 15.171h.015" /> <path d="M19.515 11.771h.015" /> <path d="M17.715 8.671h.015" /> <path d="M15.415 5.971h.015" /></svg></span><div class="pstep__b"><span class="pstep__n">Paso 4</span><h3>Ajuste de angulaciones</h3><p>Ajustar angulación horizontal y vertical; dirigir el rayo central al plano bisector y centrar el PID.</p></div></div>
+          <div class="pstep"><span class="chip sm g-mix"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11" /></svg></span><div class="pstep__b"><span class="pstep__n">Paso 5</span><h3>Exposición y evaluación</h3><p>Exponer; procesar y verificar cobertura, nitidez, contactos, ápices y ausencia de distorsión. Repetir solo si no es diagnóstica.</p></div></div>
+        </div>
+      </div></div>
+    </section>
+
+    <!-- 7 DOSIS -->
+    <section class="slide">
+      <div class="slide__scroll"><div class="slide__pad">
+        <span class="chip lg g-coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 14.6l3 5.19a9 9 0 0 0 4.5 -7.79h-6a3 3 0 0 1 -1.5 2.6" /> <path d="M13.5 9.4l3 -5.19a9 9 0 0 0 -9 0l3 5.19a3 3 0 0 1 3 0" /> <path d="M10.5 14.6l-3 5.19a9 9 0 0 1 -4.5 -7.79h6a3 3 0 0 0 1.5 2.6" /></svg></span>
+        <span class="eyebrow">Protección radiológica</span>
+        <h2 class="s-title">Rayos X: calidad con la mínima dosis</h2>
+        <div class="hero">
+          <div class="illus g-coral side"><div class="glow"></div><svg class="big" viewBox="0 0 24 24" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 14.6l3 5.19a9 9 0 0 0 4.5 -7.79h-6a3 3 0 0 1 -1.5 2.6" /> <path d="M13.5 9.4l3 -5.19a9 9 0 0 0 -9 0l3 5.19a3 3 0 0 1 3 0" /> <path d="M10.5 14.6l-3 5.19a9 9 0 0 1 -4.5 -7.79h6a3 3 0 0 0 1.5 2.6" /></svg><span class="sub a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" /> <path d="M15 19l2 2l4 -4" /></svg></span><span class="sub b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11" /></svg></span></div>
+          <div>
+            <div class="card tint-teal" style="margin-bottom:clamp(14px,2vw,18px)"><div class="ch g-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" /> <path d="M15 19l2 2l4 -4" /></svg></div><h3>Optimización (ALARA)</h3><p>Usar la <strong>menor exposición que produzca una imagen diagnóstica</strong>, con equipo calibrado y parámetros adecuados.</p></div>
+            <div class="card"><h3>Buenas prácticas</h3><ul class="bul" style="margin-top:.3rem"><li>Colimar y centrar el haz; PID próximo al posicionador para reducir dispersión.</li><li>Evitar repeticiones con buena colocación, estabilización y angulación.</li></ul></div>
+          </div>
+        </div>
+        <div class="card tint-honey" style="margin-top:clamp(14px,2.2vw,20px)"><div class="ch g-coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l1 2.5l-2 2l2 2" /></svg></div><h3>Limitaciones</h3><p>La bisectriz puede implicar <strong>mayor distorsión y exposición innecesaria</strong> si la angulación es incorrecta, y expone más ojos y tiroides. <strong>El paralelismo es preferible cuando la anatomía lo permite.</strong></p></div>
+      </div></div>
+    </section>
+
+    <!-- 8 VENTAJAS / QUIZ -->
+    <section class="slide">
+      <div class="slide__scroll"><div class="slide__pad">
+        <span class="chip lg g-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg></span>
+        <span class="eyebrow">Síntesis y repaso</span>
+        <h2 class="s-title">Ventajas, desventajas y autoevaluación</h2>
+        <div class="grid two">
+          <div class="card tint-teal"><div class="ch g-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg></div><h3>Ventajas</h3><ul class="bul" style="margin-top:.3rem"><li>Se adapta a paladares bajos, niños o pacientes que no toleran el posicionador de paralelismo.</li><li>Colocación relativamente cercana del receptor al diente.</li><li>Útil cuando la anatomía impide el paralelismo.</li></ul></div>
+          <div class="card tint-coral"><div class="ch g-coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l1 2.5l-2 2l2 2" /></svg></div><h3>Desventajas</h3><ul class="bul coral" style="margin-top:.3rem"><li>Mayor dependencia de la habilidad del operador.</li><li>Riesgo de elongación, escorzo, magnificación y superposición de contactos.</li><li>Posible repetición de imágenes y exposición adicional.</li></ul></div>
+        </div>
+        <h3 class="subhead" style="margin:clamp(20px,3vh,28px) 0 .3rem">Preguntas de examen oral</h3>
+        <div class="qgrid">
+          <div class="q"><div class="q__n">1</div><p>¿Qué línea divide el ángulo entre diente y receptor?</p></div>
+          <div class="q"><div class="q__n">2</div><p>¿Dónde debe dirigirse el rayo central?</p></div>
+          <div class="q"><div class="q__n">3</div><p>¿Qué error produce elongación y cuál escorzo?</p></div>
+          <div class="q"><div class="q__n">4</div><p>¿Cuándo elegirías bisectriz en lugar de paralelismo?</p></div>
+        </div>
+      </div></div>
+    </section>
+
+    <!-- 9 FUENTES -->
+    <section class="slide">
+      <div class="slide__scroll"><div class="slide__pad">
+        <span class="chip lg g-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg></span>
+        <span class="eyebrow">Referencias</span>
+        <h2 class="s-title">Fuentes</h2>
+        <div class="src-list">
+          <div class="src"><span class="ch g-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg></span>Método bisectriz — Radiología en endodoncia — UNAM</div>
+          <div class="src"><span class="ch g-sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5c-1.074 -.586 -2.583 -1.5 -4 -1.5c-2.1 0 -4 1.247 -4 5c0 4.899 1.056 8.41 2.671 10.537c.573 .756 1.97 .521 2.567 -.236c.398 -.505 .819 -1.439 1.262 -2.801c.292 -.771 .892 -1.504 1.5 -1.5c.602 0 1.21 .737 1.5 1.5c.443 1.362 .864 2.295 1.262 2.8c.597 .759 2 .993 2.567 .237c1.615 -2.127 2.671 -5.637 2.671 -10.537c0 -3.74 -1.908 -5 -4 -5c-1.423 0 -2.92 .911 -4 1.5" /> <path d="M12 5.5l3 1.5" /></svg></span>Chapter 3 — Radiographic Technique</div>
+        </div>
+        <p class="credit">Íconos: Tabler Icons (MIT) y Game-icons.net (CC BY 3.0). Ilustraciones geométricas y de dientes: originales.</p>
+      </div></div>
+    </section>
+
+  </div>
+
+  <div class="hint" id="hint">Desliza para avanzar →</div>
+
+  <nav class="nav">
+    <button class="nav-btn icon" id="prev" aria-label="Anterior"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="dots" id="dots"></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="counter" id="counter"><b>1</b> / 10</span>
+      <button class="nav-btn icon" id="next" aria-label="Siguiente"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+  </nav>
+</div>
+
+<script>
+(function(){
+  const slides=Array.from(document.querySelectorAll('.slide')),total=slides.length;
+  const bar=document.getElementById('bar'),counter=document.getElementById('counter'),dotsWrap=document.getElementById('dots');
+  const prevBtn=document.getElementById('prev'),nextBtn=document.getElementById('next'),hint=document.getElementById('hint');
+  let idx=0;
+  slides.forEach((_,i)=>{const b=document.createElement('button');b.className='dot-b';b.setAttribute('aria-label','Diapositiva '+(i+1));b.addEventListener('click',()=>goTo(i));dotsWrap.appendChild(b);});
+  const dots=Array.from(dotsWrap.children);
+  function render(){
+    slides.forEach((s,i)=>{s.classList.remove('is-active','is-prev');if(i===idx)s.classList.add('is-active');else if(i<idx)s.classList.add('is-prev');s.querySelector('.slide__scroll').scrollTop=0;});
+    dots.forEach((d,i)=>d.classList.toggle('on',i===idx));
+    bar.style.width=(total<=1?100:(idx/(total-1))*100)+'%';
+    counter.innerHTML='<b>'+(idx+1)+'</b> / '+total;
+    prevBtn.disabled=idx===0;nextBtn.disabled=idx===total-1;
+    if(location.hash!=='#'+idx)history.replaceState(null,'','#'+idx);
+  }
+  function goTo(n){const c=Math.max(0,Math.min(total-1,n));if(c===idx)return;idx=c;render();}
+  const next=()=>goTo(idx+1),prev=()=>goTo(idx-1);
+  prevBtn.addEventListener('click',prev);nextBtn.addEventListener('click',next);
+  window.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();next();}else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();}else if(e.key==='Home')goTo(0);else if(e.key==='End')goTo(total-1);});
+  let sx=0,sy=0,st=0,tracking=false;const deck=document.getElementById('slides');
+  deck.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();tracking=true;},{passive:true});
+  deck.addEventListener('touchend',e=>{if(!tracking)return;tracking=false;const t=e.changedTouches[0];const dx=t.clientX-sx,dy=t.clientY-sy,dt=Date.now()-st;if(Math.abs(dx)>Math.abs(dy)*1.4&&Math.abs(dx)>45&&dt<800){dx<0?next():prev();dismissHint();}},{passive:true});
+  let hintGone=false;function dismissHint(){if(hintGone)return;hintGone=true;hint.classList.add('gone');}
+  prevBtn.addEventListener('click',dismissHint);nextBtn.addEventListener('click',dismissHint);setTimeout(dismissHint,6000);
+  window.addEventListener('hashchange',()=>{const n=parseInt(location.hash.replace('#',''),10);if(!isNaN(n))goTo(n);});
+  const start=parseInt(location.hash.replace('#',''),10);if(!isNaN(start))idx=Math.max(0,Math.min(total-1,start));
+  render();
+})();
+</script>
+</body>
+</html>
